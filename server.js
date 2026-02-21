@@ -1,42 +1,44 @@
 const express = require("express");
-const mysql = require("mysql2");
 const cors = require("cors");
+const { Pool } = require("pg");
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 
-const db = mysql.createConnection({
-    host: "localhost",
-    user: "root",
-    password: "abi2007",
-    database: "portfolio"
+app.get("/", (req, res) => {
+  res.send("Backend is live!");
 });
 
-db.connect((err) => {
-    if (err) {
-        console.error("Database connection failed:", err);
-    } else {
-        console.log("Connected to MySQL");
-    }
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false,
+  },
 });
 
-app.post("/contact", (req, res) => {
-    const { name, email, message } = req.body;
-
-    const sql = "INSERT INTO messages (name, email, message) VALUES (?, ?, ?)";
-
-    db.query(sql, [name, email, message], (err, result) => {
-        if (err) {
-            console.error("Insert error:", err);
-            res.status(500).send("Error saving data");
-        } else {
-            res.json({ message: "Message saved to database!" });
-        }
-    });
+app.get("/", (req, res) => {
+  res.send("Backend is live!");
 });
 
-app.listen(3000, () => {
-    console.log("Server running on http://localhost:3000");
+app.post("/contact", async (req, res) => {
+  const { name, email, message } = req.body;
+
+  try {
+    await pool.query(
+      "INSERT INTO messages (name, email, message) VALUES ($1, $2, $3)",
+      [name, email, message]
+    );
+    res.json({ message: "Message saved successfully!" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Database error");
+  }
+});
+
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
