@@ -19,6 +19,10 @@ app.get("/", (req, res) => {
   res.send("Backend is live!");
 });
 
+app.get("/api",(req,res) => {
+  res.send("API is working");
+});
+
 app.post("/contact", async (req, res) => {
   const { name, email, message } = req.body;
 
